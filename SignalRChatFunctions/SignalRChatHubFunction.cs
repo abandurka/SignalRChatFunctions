@@ -53,7 +53,7 @@ namespace SignalRChatFunctions
                 new SignalRMessage
                 {
                     Target = "MessageReceived",
-                    Arguments = new object[] { message }
+                    Arguments = new object[] { chatMessage }
                 });
         }
     }
