@@ -1,4 +1,7 @@
 using System;
+using System.Collections.Generic;
+using System.Linq;
+using System.Runtime.CompilerServices;
 using System.Threading.Tasks;
 using Microsoft.Azure.WebJobs;
 using Microsoft.Azure.WebJobs.Extensions.Http;
@@ -42,7 +45,7 @@ namespace SignalRChatFunctions
         }
 
         [FunctionName("messages")]
-        public async Task SendMessage(
+        public async Task SendMessageAsync(
             [HttpTrigger(AuthorizationLevel.Anonymous, "post", Route = null)] JObject message,
             [SignalR(HubName = "chat")] IAsyncCollector<SignalRMessage> signalRMessages
         )
@@ -55,6 +58,15 @@ namespace SignalRChatFunctions
                     Target = "MessageReceived",
                     Arguments = new object[] { chatMessage }
                 });
+        }
+
+        [FunctionName("history")]
+        public async Task<IReadOnlyCollection<ChatMessage>> GetHistoryAsync(
+            [HttpTrigger(AuthorizationLevel.Anonymous, "get", Route = null)] HttpRequest req)
+        {
+            var container = _cosmosClient.Value.GetContainer("SimpleChatDb", "MessageHistory");
+            var messages = await container.GetItemQueryIterator<ChatMessage>("SELECT * FROM c").ReadNextAsync();
+            return messages.ToList();
         }
     }
 }
